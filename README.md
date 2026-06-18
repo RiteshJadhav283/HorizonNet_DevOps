@@ -224,3 +224,4 @@ This project features a fully automated CI/CD pipeline defined in a declarative 
 4. **Webhooks vs. Polling on Localhost**:
    - Typically, production environments use GitHub webhooks where GitHub sends a POST request to Jenkins on every commit. However, because our Jenkins instance is running on `localhost`, the public internet (and GitHub servers) cannot route to it directly.
    - Therefore, **SCM Polling** is used as a local network fallback. Polling means that Jenkins regularly queries the GitHub API on an interval (every 2 minutes) to check if any new commits have been pushed, and triggers a build if changes are found.
+
