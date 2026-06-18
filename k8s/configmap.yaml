@@ -1,0 +1,10 @@
+# NOTE: ConfigMaps are used to store non-sensitive configuration data in plain text,
+# whereas Secrets are used to store sensitive information (credentials, secrets).
+# This is why PORT (non-sensitive) is defined here, while MONGO_URI and passwords
+# are defined separately in secret.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: horizonnet-config
+data:
+  PORT: "3000"

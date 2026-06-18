@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: horizonnet-app
+  labels:
+    app: horizonnet
+spec:
+  # Running 2 replicas directly demonstrates the "scalability/resilience" requirement.
+  # If one Pod crashes or is deleted, the second pod continues serving traffic with zero downtime
+  # while Kubernetes automatically provisions a replacement.
+  replicas: 2
+  selector:
+    matchLabels:
+      app: horizonnet
+  template:
+    metadata:
+      labels:
+        app: horizonnet
+    spec:
+      containers:
+        - name: horizonnet-container
+          # Using the locally built image tagged as horizonnet-app:local
+          image: horizonnet-app:local
+          # imagePullPolicy: Never ensures that Kubernetes does not try to pull the image
+          # from a remote registry (like Docker Hub), since the image was built locally
+          # inside the Minikube Docker environment.
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          # Pull environment variables from both the Secret and ConfigMap
+          envFrom:
+            - secretRef:
+                name: horizonnet-secrets
+            - configMapRef:
+                name: horizonnet-config
+          # livenessProbe: If this check fails repeatedly, Kubernetes will automatically
+          # kill and restart the Pod container. This is what makes the application self-healing.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            # initialDelaySeconds: Wait 10 seconds before the first probe to give the app time to start.
+            # periodSeconds: How often (every 10 seconds) to perform the probe.
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          # readinessProbe: If this check fails, Kubernetes stops sending routing traffic
+          # to this specific Pod (without killing it) until the check starts passing again.
+          # Distinction from livenessProbe: readiness controls whether the Pod should receive traffic
+          # right now (e.g. while starting up or if overloaded), while liveness controls whether the
+          # Pod is dead and needs to be killed and replaced.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10

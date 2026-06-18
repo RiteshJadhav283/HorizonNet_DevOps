@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    # Build the image using the Dockerfile in the current directory
+    build: .
+    
+    # Map the container port 3000 to the host port 3000
+    ports:
+      - "3000:3000"
+      
+    # Load all environment variables (PORT, MONGO_URI, SESSION_SECRET, etc.)
+    # directly from the local .env file.
+    env_file:
+      - .env
+
+    # NOTE: MONGO_URI in .env is configured to connect to MongoDB Atlas (a cloud database).
+    # Since the database lives in the cloud and is accessed over the internet, we do not
+    # need a local 'mongo' service, local volume configuration, or 'depends_on' directives.
+    # The application container reaches Atlas over the normal public internet.
+    # 
+    # IMPORTANT: Ensure MongoDB Atlas has its Network Access IP Access List configured
+    # to allow connections from where this container runs. For local developer machines,
+    # your current IP must be allowed. For production/Kubernetes, the server/cluster IPs
+    # must be added to the Atlas allowlist.

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: horizonnet-service
+spec:
+  # NodePort type is used specifically for local development to expose the port directly
+  # on the cluster node IP. In a cloud deployment (AWS/GCP), we would use a 'LoadBalancer'
+  # type which provisions a cloud provider's external load balancer.
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30080  # Optional, but exposes on port 30080 for easy access
+  selector:
+    app: horizonnet
+# NOTE: This Service acts as a stable DNS hostname and IP address that other workloads
+# (or external users) use to access the app. Kubernetes will automatically balance traffic
+# across the matching active Pods, regardless of which specific Pod handles the request
+# or if any individual Pod is replaced or rescheduled.
