@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Docker Registry settings
-        DOCKER_USER = 'riteshjadhav283'
+        DOCKER_USER = 'riteshjadav'
         IMAGE_NAME = 'horizonnet-app'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
     }
