@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HorizonNet Lite - Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <header class="app-header">
+    <div class="header-logo">
+      <span class="logo-icon">📡</span>
+      <h1>HorizonNet <span class="accent-text">Lite</span></h1>
+    </div>
+    <div class="user-control">
+      <span class="user-badge">Admin</span>
+      <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    <div class="dashboard-header">
+      <h2>Station & Satellite Monitoring</h2>
+      <button id="refreshBtn" class="btn btn-secondary">🔄 Refresh</button>
+    </div>
+
+    <div id="loadingMessage" class="loading-state">
+      Loading systems...
+    </div>
+
+    <div id="errorMessage" class="error-banner hidden"></div>
+
+    <div id="stationsGrid" class="stations-grid hidden"></div>
+  </main>
+
+  <script>
+    // Fetch and render data
+    async function loadStations() {
+      const grid = document.getElementById('stationsGrid');
+      const loader = document.getElementById('loadingMessage');
+      const errorMsg = document.getElementById('errorMessage');
+
+      loader.classList.remove('hidden');
+      errorMsg.classList.add('hidden');
+      
+      try {
+        const response = await fetch('/api/stations');
+
+        if (response.status === 401) {
+          // Redirect to login if unauthorized
+          window.location.href = '/login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch stations');
+        }
+
+        const stations = await response.json();
+        renderStations(stations);
+        
+        loader.classList.add('hidden');
+        grid.classList.remove('hidden');
+      } catch (err) {
+        loader.classList.add('hidden');
+        errorMsg.textContent = 'Error fetching stations list. Please try again.';
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function renderStations(stations) {
+      const grid = document.getElementById('stationsGrid');
+      grid.innerHTML = '';
+
+      if (stations.length === 0) {
+        grid.innerHTML = '<div class="no-data">No stations or satellites monitored yet.</div>';
+        return;
+      }
+
+      stations.forEach(station => {
+        const card = document.createElement('div');
+        card.className = `station-card status-${station.status}`;
+
+        // Human readable date formatting
+        const lastPingDate = new Date(station.lastPing);
+        const formattedDate = lastPingDate.toLocaleString();
+
+        // Icon based on type
+        const typeIcon = station.type === 'satellite' ? '🛰️' : '🏠';
+        const typeLabel = station.type === 'satellite' ? 'Satellite' : 'Ground Station';
+
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="type-badge" title="${typeLabel}">${typeIcon} ${typeLabel}</span>
+            <span class="status-badge ${station.status}">${station.status.toUpperCase()}</span>
+          </div>
+          <div class="card-body">
+            <h3>${station.name}</h3>
+            <p class="location"><strong>Location:</strong> ${station.location}</p>
+            <div class="signal-area">
+              <strong>Signal Strength:</strong>
+              <div class="signal-bar-container">
+                <div class="signal-bar" style="width: ${station.signalStrength}%"></div>
+              </div>
+              <span class="signal-value">${station.signalStrength}%</span>
+            </div>
+            <p class="last-ping"><strong>Last Ping:</strong> ${formattedDate}</p>
+          </div>
+          <div class="card-actions">
+            <label for="statusSelect-${station._id}">Change Status:</label>
+            <select id="statusSelect-${station._id}" onchange="updateStationStatus('${station._id}', this.value)">
+              <option value="online" ${station.status === 'online' ? 'selected' : ''}>Online</option>
+              <option value="offline" ${station.status === 'offline' ? 'selected' : ''}>Offline</option>
+              <option value="maintenance" ${station.status === 'maintenance' ? 'selected' : ''}>Maintenance</option>
+            </select>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function updateStationStatus(id, newStatus) {
+      try {
+        const response = await fetch(`/api/stations/${id}/status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response.status === 401) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to update status');
+        }
+
+        // Reload the stations info
+        await loadStations();
+      } catch (err) {
+        alert('Failed to update station status. Please try again.');
+      }
+    }
+
+    // Logout Action
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/logout', { method: 'POST' });
+        if (response.ok) {
+          window.location.href = '/login.html';
+        } else {
+          alert('Failed to log out.');
+        }
+      } catch (err) {
+        alert('Network error occurred during logout.');
+      }
+    });
+
+    // Refresh action
+    document.getElementById('refreshBtn').addEventListener('click', loadStations);
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', loadStations);
+  </script>
+</body>
+</html>
