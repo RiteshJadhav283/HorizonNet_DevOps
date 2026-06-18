@@ -16,6 +16,17 @@ spec:
     metadata:
       labels:
         app: horizonnet
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'horizonnet-role'
+        vault.hashicorp.com/agent-inject-secret-credentials.env: 'secret/data/horizonnet'
+        vault.hashicorp.com/agent-inject-template-credentials.env: |
+          {{- with secret "secret/data/horizonnet" -}}
+          export DB_URL="{{ .Data.data.DB_URL }}"
+          export MONGO_URI="{{ .Data.data.DB_URL }}"
+          export SESSION_SECRET="{{ .Data.data.SESSION_SECRET }}"
+          export ADMIN_PASSWORD="{{ .Data.data.ADMIN_PASSWORD }}"
+          {{- end -}}
     spec:
       containers:
         - name: horizonnet-container
@@ -27,10 +38,10 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
-          # Pull environment variables from both the Secret and ConfigMap
+          command: ["/bin/sh", "-c"]
+          args: ["source /vault/secrets/credentials.env && node server.js"]
+          # Pull environment variables from ConfigMap (secrets are injected via Vault)
           envFrom:
-            - secretRef:
-                name: horizonnet-secrets
             - configMapRef:
                 name: horizonnet-config
           # livenessProbe: If this check fails repeatedly, Kubernetes will automatically
