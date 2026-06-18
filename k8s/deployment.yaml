@@ -24,7 +24,7 @@ spec:
           # imagePullPolicy: Never ensures that Kubernetes does not try to pull the image
           # from a remote registry (like Docker Hub), since the image was built locally
           # inside the Minikube Docker environment.
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
           # Pull environment variables from both the Secret and ConfigMap
