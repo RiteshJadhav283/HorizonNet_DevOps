@@ -51,14 +51,12 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Deploy to Kubernetes.
-                    // DESIGN CHOICE: We use `kubectl set image` to update the deployment image.
-                    // This approach is selected because it is clean and does not modify the
-                    // Git-tracked YAML files in the repository. Modifying deployment.yaml inside the
-                    // pipeline and committing it back would trigger a recursive CI/CD pipeline loop.
-                    // This imperative update tells Kubernetes to execute a rolling update immediately.
+                    // Deploy to Kubernetes by applying the latest deployment manifest.
+                    // We modify the image tag in-place in deployment.yaml using sed before applying,
+                    // ensuring all new sidecar annotations and entrypoint updates are successfully configured.
                     echo "Deploying newly built image version: ${DOCKER_USER}/${IMAGE_NAME}:${BUILD_NUMBER}"
-                    sh "kubectl set image deployment/horizonnet-app horizonnet-container=${DOCKER_USER}/${IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "sed -i 's|image: horizonnet-app:local|image: ${DOCKER_USER}/${IMAGE_NAME}:${BUILD_NUMBER}|' k8s/deployment.yaml"
+                    sh "kubectl apply -f k8s/deployment.yaml"
                 }
             }
         }
