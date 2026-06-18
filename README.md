@@ -197,7 +197,7 @@ This project features a fully automated CI/CD pipeline defined in a declarative 
 ### One-Time Manual Setup Steps
 
 1. **Unlocking Jenkins**:
-   - Navigate to `http://localhost:8080` in your browser.
+   - Navigate to `http://localhost:8081` in your browser.
    - Unlock using the initial admin password: `3ce4d4b9fe0c49048d7b252866ef4d89` (already retrieved).
    - Select **Install suggested plugins** and wait for it to complete. Skip user creation or configure one to log in.
 
